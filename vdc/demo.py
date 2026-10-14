@@ -37,7 +37,8 @@ def main() -> None:
         )
     print()
     mark = monte_carlo_linear(QUOTE0, TOKEN0, FRONT_LOADED, terms, n=200, seed=7)
-    print(f"pricing measure  front-loaded flow   n={mark.n}  seed=7")
+    print("toy flow         front-loaded Poisson, not the 33-tape sample")
+    print(f"                 n={mark.n}  seed=7")
     print(f"fair to long     {mark.fair_to_long:>8.2f}   stderr {mark.stderr:.2f}")
     print(f"mean velocity    {mark.mean_velocity * 100:.2f}%/min")
 

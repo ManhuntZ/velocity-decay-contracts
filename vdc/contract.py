@@ -29,8 +29,10 @@ def _clamp(x: float, lo: float, hi: float) -> float:
 @dataclass(frozen=True)
 class LinearTerms:
     window: float = 900.0
-    half_life: float = 300.0
-    strike_per_minute: float = 0.10
+    # data/launches.json, 14 Oct 2026, n=33. Time reversal picks 120s.
+    # Strike is the 60th percentile of V under that kernel.
+    half_life: float = 120.0
+    strike_per_minute: float = -0.03364949456289831
     notional: float = 1000.0
     cap: float = 1000.0
 
