@@ -1,0 +1,12 @@
+[project]
+name = "velocity-decay-contracts"
+version = "0.2.0"
+description = "Cash-settled contracts on the decay-weighted price velocity of a bonding-curve launch"
+readme = "README.md"
+requires-python = ">=3.10"
+
+[project.scripts]
+vdc = "vdc.demo:main"
+
+[tool.setuptools.packages.find]
+include = ["vdc*"]
