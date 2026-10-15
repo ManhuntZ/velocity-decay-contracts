@@ -11,6 +11,7 @@ from vdc.contract import (
 from vdc.curve import QUOTE0, TOKEN0, BondingCurve, Print, path_from_trades
 from vdc.fit import Fit, KernelScore, fit_launches, load_launches
 from vdc.flow import FRONT_LOADED, Flow, monte_carlo_linear, simulate_flow
+from vdc.freeze import FREEZE_CLOCKS, FreezePoint, freeze_clock
 from vdc.sample import SAMPLE_WINDOW, SampleMark, mark_launches
 from vdc.scenarios import BUY_SIZES, SCENARIOS, grind_trades, late_trades, sniper_trades
 from vdc.velocity import (
@@ -21,7 +22,7 @@ from vdc.velocity import (
     prepare_path,
 )
 
-__version__ = "0.3.2"
+__version__ = "0.3.3"
 
 __all__ = [
     "BUY_SIZES",
@@ -29,6 +30,9 @@ __all__ = [
     "DigitalSettlement",
     "DigitalTerms",
     "FRONT_LOADED",
+    "FREEZE_CLOCKS",
+    "FreezePoint",
+    "freeze_clock",
     "Flow",
     "Fit",
     "KernelScore",

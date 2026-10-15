@@ -99,6 +99,25 @@ Settled on the locked terms, the window pays **−363.59** to the long. Standard
 
 The two windows are not pooled. A blend would look more precise and would hide the disagreement.
 
+## If the tape froze
+
+The inception means are −131 and −364. Lift the cap and they are **−136.00** and **−551.55**. Ten tapes on the second window were truncated at collateral, so the clamp was hiding left tail, not creating the gap. The second window is worse without the cap.
+
+Drop every print after a clock and settle what is left, flat-carrying to 15 minutes. R² is one minus the residual sum of squares over the total sum of squares of the final payoff. RMSE is in desk units. Sign is the share of tapes that finish on the same side of zero.
+
+| clock | 14 Oct R² | RMSE | sign | 15 Oct R² | RMSE | sign |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 30s | 0.351 | 256 | 0.79 | −0.021 | 500 | 0.73 |
+| 60s | 0.576 | 207 | 0.88 | 0.783 | 231 | 0.83 |
+| 2 min | 0.907 | 97 | 1.00 | 0.947 | 114 | 0.90 |
+| 5 min | 0.998 | 15 | 1.00 | 0.999 | 15 | 0.97 |
+
+By one half-life, that counterfactual explains about 91% and 95% of final-payoff variance on the two windows. At 30 seconds it does not. On the second window the frozen payoff is slightly worse than guessing the mean.
+
+This is not a conditional expectation, and it is not "the contract is finished." Three tapes on 15 Oct still have the wrong sign at two minutes. One tape on 14 Oct is positive if frozen at three minutes and finishes about 109 in the other direction. The canned late tape is a different object again: nothing has printed by two minutes, so a freeze there pays the strike and the real payoff arrives later.
+
+Half-life and strike stay the 14 Oct fit. The windows stay unpooled.
+
 ## Launch mark, retired
 
 An earlier draft printed a handmade Poisson flow near +464. That simulator is still in the package, and still tested. It is not the mark.

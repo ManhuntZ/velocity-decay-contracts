@@ -7,6 +7,7 @@ from pathlib import Path
 from vdc.contract import LinearTerms, settle_linear
 from vdc.curve import QUOTE0, TOKEN0, path_from_trades
 from vdc.fit import fit_launches, load_launches
+from vdc.freeze import FREEZE_CLOCKS, freeze_clock
 from vdc.sample import mark_launches
 from vdc.scenarios import SCENARIOS
 
@@ -59,6 +60,30 @@ def main() -> None:
         f"its own fit      half-life {fitted.half_life:.0f}s   "
         f"strike {fitted.strike_per_minute * 100:.2f}%/min   "
         f"{'spec default unchanged' if held else 'disagrees with the spec default'}"
+    )
+    _print_freeze(launches, second, terms)
+
+
+def _print_freeze(first: list[dict], second: list[dict], terms: LinearTerms) -> None:
+    left = {point.clock: point for point in freeze_clock(first, terms)}
+    right = {point.clock: point for point in freeze_clock(second, terms)}
+    print()
+    print("if the tape froze   flat carry   not a conditional expectation")
+    print(f"{'clock':<8}{'14 Oct R²':>12}{'RMSE':>8}{'sign':>8}{'15 Oct R²':>12}{'RMSE':>8}{'sign':>8}")
+    for clock in FREEZE_CLOCKS:
+        a = left[clock]
+        b = right[clock]
+        print(
+            f"{clock:.0f}s".ljust(8)
+            + f"{a.r_squared:12.3f}{a.rmse:8.0f}{a.sign_agreement:8.2f}"
+            + f"{b.r_squared:12.3f}{b.rmse:8.0f}{b.sign_agreement:8.2f}"
+        )
+    raw = LinearTerms(cap=1e12)
+    raw_a = mark_launches(first, raw)
+    raw_b = mark_launches(second, raw)
+    print(
+        f"uncapped mean    14 Oct {raw_a.mean_payoff:.2f}   "
+        f"15 Oct {raw_b.mean_payoff:.2f}   the cap is not the gap"
     )
 
 
