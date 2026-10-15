@@ -67,11 +67,20 @@ Window 900s, half-life 120s, strike −3.36%/min, notional 1,000, cap 1,000. Tha
 
 The fitted strike sits below the log slope of these canned buys, so the long is paid on all three and paid most when the buys are early. On a flat kernel the three contract velocities collapse to the log slope.
 
-## Launch mark
+## In-sample mark
 
-`python -m vdc` still prices a handmade front-loaded Poisson flow: buys at intensity `0.35 · exp(−t/90)`, lognormal size with median 40, sells from 120s. Under the fitted strike, n=200, seed 7, that toy marks about **+463.8** to the long, stderr about 5.5, mean `V` about 43%/min.
+The inception mark is the mean payoff to the long on the 33 tapes, settled at the spec default. One of those tapes hits the cap.
 
-That is not the mean payoff on the 33 tapes, and it is not a market. The strike is empirical. The flow is not. Collateral and settlement are already specified. A mark on the empirical distribution is a later step.
+| | |
+| --- | ---: |
+| mean payoff | −131.13 |
+| standard error of the mean | 56.18 |
+| mean V | −16.96%/min |
+| tapes at the cap | 1 |
+
+`python -m vdc` prints that number. It is one faded hour. The standard error is 56, so another window can move the mean by a lot. It is not a quote.
+
+An earlier draft printed a handmade Poisson flow near +464. That simulator is still in the package, and still tested. It points the wrong way on this sample. It is not the mark.
 
 ## Run
 

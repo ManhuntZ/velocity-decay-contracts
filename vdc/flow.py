@@ -1,8 +1,9 @@
-"""A pricing measure, not a venue.
+"""Front-loaded Poisson simulator. Not the pricing measure.
 
 Buys arrive as an inhomogeneous Poisson process with decaying intensity.
-Sells start after a delay, also decaying. Sizes are lognormal. This is the
-measure used to mark a contract at launch — it is not a forecast of a ticker.
+Sells start after a delay, also decaying. Sizes are lognormal. Kept so the
+path generator stays reproducible. The inception mark is the mean payoff on
+the shipped tapes, not a draw from this flow.
 """
 
 from __future__ import annotations

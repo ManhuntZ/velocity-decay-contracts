@@ -1,10 +1,13 @@
-"""Print the three tapes and a launch mark."""
+"""Print the three tapes and the in-sample mark."""
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from vdc.contract import LinearTerms, settle_linear
 from vdc.curve import QUOTE0, TOKEN0, path_from_trades
-from vdc.flow import FRONT_LOADED, monte_carlo_linear
+from vdc.fit import load_launches
+from vdc.sample import mark_launches
 from vdc.scenarios import SCENARIOS
 
 
@@ -36,11 +39,11 @@ def main() -> None:
             f"{settled.payoff_to_long:>12.2f}"
         )
     print()
-    mark = monte_carlo_linear(QUOTE0, TOKEN0, FRONT_LOADED, terms, n=200, seed=7)
-    print("toy flow         front-loaded Poisson, not the 33-tape sample")
-    print(f"                 n={mark.n}  seed=7")
-    print(f"fair to long     {mark.fair_to_long:>8.2f}   stderr {mark.stderr:.2f}")
-    print(f"mean velocity    {mark.mean_velocity * 100:.2f}%/min")
+    launches = load_launches(Path(__file__).resolve().parents[1] / "data" / "launches.json")
+    mark = mark_launches(launches, terms)
+    print(f"in-sample mark   n={mark.n}   14 Oct 2026   not a quote")
+    print(f"mean payoff      {mark.mean_payoff:>8.2f}   stderr {mark.stderr:.2f}")
+    print(f"mean velocity    {mark.mean_velocity * 100:.2f}%/min   capped {mark.n_capped}")
 
 
 if __name__ == "__main__":
