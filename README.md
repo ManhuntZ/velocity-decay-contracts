@@ -155,11 +155,40 @@ Scored on the cuts above. They were not refit.
 
 Worst, then middle, then best. The worst bin is negative and the best bin is positive. That is the pre-registered test, and it holds. Lift the cap and the worst bin goes to **−976.26**; the other two bins do not move. The order is not the clamp.
 
-The level still does not. This crash bucket is −725, against −466 on 14 Oct and −943 at 03:37. Three numbers, none of them a price.
+The tertile level still does not. This crash bucket is −725, against −466 on 14 Oct and −943 at 03:37. Those thirds are not the same state. The next section says what is.
 
 Settled on the locked terms, the mean payoff is **−279.71**. Standard error 77.44. Six tapes hit the cap. Mean `V` is −41.4%/min. Uncapped, the mean is −380.31. It sits between the other two sample means. It is not pooled with them.
 
 Time reversal on this window still ranks 2 minutes first, and its own 60th percentile is −3.99%/min. The t-statistic is 1.30. That is not a confirmation of the kernel. The spec default stays.
+
+## Same velocity
+
+The inception means differed because the later windows contained crashes the first one never saw. Put every tape on one absolute grid of frozen velocity at two minutes. The edges are declared: −100, −50, −19, −0.5, and +5 percent per minute. The right edge is included. They are not estimated, and they are not the tertile cuts.
+
+| frozen V at 2 min | 14 Oct | 03:37 | 08:12 |
+| --- | ---: | ---: | ---: |
+| at or below −100%/min | none | −1000.0 (n=8) | −1000.0 (n=4) |
+| −100 to −50 | −828.3 (n=4) | −993.2 (n=3) | −824.0 (n=3) |
+| −50 to −19 | −259.5 (n=7) | −334.7 (n=1) | −445.1 (n=5) |
+| −19 to −0.5 | −69.0 (n=11) | −42.4 (n=8) | −16.0 (n=10) |
+| −0.5 to +5 | +71.8 (n=4) | +9.8 (n=6) | +33.2 (n=4) |
+| above +5 | +182.0 (n=7) | +171.8 (n=4) | +83.2 (n=4) |
+
+14 Oct never froze at or below −100%/min. Eight tapes at 03:37 and four at 08:12 did, and every one of them finishes at the cap. That is the −131 / −364 / −280 disagreement. The −50 to −19 cell has one tape at 03:37. It is listed and it is not a result. Above +5%/min, 08:12 finishes at +83 against +182 on 14 Oct, about two standard errors, four tapes against seven. That is the only cell that looks softer. It does not move the half-life or the strike. From −100 to −50, 14 Oct and 08:12 are −828 and −824.
+
+Where the three ranges overlap, −96.69%/min through +24.63%, the mean final payoff is **−159.93** (n=31), **−156.83** (n=21), and **−168.90** (n=26). Twelve desk units across, not two hundred.
+
+The finished payoff on the flat-carry payoff at two minutes:
+
+| window | slope | intercept | residual | RMSE |
+| --- | ---: | ---: | ---: | ---: |
+| 14 Oct | 1.094 | −20.48 | −30.02 ± 16.31 | 88 |
+| 03:37 | 1.033 | −34.58 | −45.18 ± 19.50 | 104 |
+| 08:12 | 1.016 | −44.35 | −48.08 ± 23.67 | 127 |
+
+The slope sits between 1.02 and 1.09. The residual, final minus flat-carry, is a few dozen desk units against the long on every window. The largest gap between those averages is 18, and the standard error of that gap is 29. Once the velocity is the same, the days are not separated.
+
+The residual is still there. RMSE of 88 to 127 is not an exact early settlement. Do not fit a smoother than slope 1. Do not pool the three means into one price. Half-life and strike stay the 14 Oct fit.
 
 ## Launch mark, retired
 

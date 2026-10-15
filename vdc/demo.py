@@ -7,7 +7,7 @@ from pathlib import Path
 from vdc.contract import LinearTerms, settle_linear
 from vdc.curve import QUOTE0, TOKEN0, path_from_trades
 from vdc.fit import fit_launches, load_launches
-from vdc.freeze import FREEZE_CLOCKS, freeze_clock, frozen_rank, window_gap
+from vdc.freeze import FREEZE_CLOCKS, composition, freeze_clock, frozen_rank, window_gap
 from vdc.sample import mark_launches
 from vdc.scenarios import SCENARIOS
 
@@ -66,6 +66,7 @@ def main() -> None:
     _print_rank(launches, second, terms)
     third = load_launches(Path(__file__).resolve().parents[1] / "data" / "launches_c.json")
     _print_third(launches, third, terms)
+    _print_composition([launches, second, third], terms)
 
 
 def _print_freeze(first: list[dict], second: list[dict], terms: LinearTerms) -> None:
@@ -140,6 +141,50 @@ def _print_third(first: list[dict], third: list[dict], terms: LinearTerms) -> No
     for name, bin_ in zip(("worst", "middle", "best"), rank.replication):
         print(f"{name:<8}{bin_.n:4d}{bin_.mean_payoff:10.2f}{bin_.stderr:8.2f}")
     print("order holds. the worst-third level does not. not a price.")
+
+
+def _print_composition(windows: list[list[dict]], terms: LinearTerms) -> None:
+    result = composition(windows, terms)
+    print()
+    print("same frozen velocity   absolute grid   not a tertile   not a price")
+    print(f"{'bin':<16}{'14 Oct':>14}{'03:37':>14}{'08:12':>14}")
+    for row in result.bins:
+        print(f"{_bin_label(row.low, row.high):<16}{_cell(row.cells[0])}{_cell(row.cells[1])}{_cell(row.cells[2])}")
+    print(
+        f"overlap {result.overlap_low * 100:.2f}%/min to {result.overlap_high * 100:.2f}%/min"
+    )
+    print(
+        "mean final       "
+        + "   ".join(f"{cell.mean_payoff:.2f} (n={cell.n})" for cell in result.overlap)
+    )
+    print(f"{'window':<16}{'slope':>8}{'residual':>10}{'se':>8}{'RMSE':>8}")
+    for name, row in zip(("14 Oct", "03:37", "08:12"), result.windows):
+        print(
+            f"{name:<16}{row.slope:8.3f}{row.residual_mean:10.2f}{row.residual_stderr:8.2f}{row.rmse:8.0f}"
+        )
+    print("same velocity pays about the same. the tertile gap is mix. not pooled.")
+
+
+def _bin_label(low: float | None, high: float | None) -> str:
+    def pct(edge: float) -> str:
+        points = edge * 100
+        if abs(points) < 1:
+            return f"{points:.1f}%"
+        return f"{points:.0f}%"
+
+    if low is None and high is not None:
+        return f"<= {pct(high)}"
+    if high is None and low is not None:
+        return f"> {pct(low)}"
+    if low is None or high is None:
+        return "?"
+    return f"{pct(low)}..{pct(high)}"
+
+
+def _cell(cell) -> str:
+    if cell.n == 0 or cell.mean_payoff is None:
+        return f"{'-':>14}"
+    return f"{cell.mean_payoff:8.1f} ({cell.n})".rjust(14)
 
 
 if __name__ == "__main__":

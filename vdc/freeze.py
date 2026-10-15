@@ -277,3 +277,208 @@ def _bin_payoffs(
         buckets[_assign(velocity, low_cut, high_cut)].append(payoff)
     return (_rank_bin(buckets[0]), _rank_bin(buckets[1]), _rank_bin(buckets[2]))
 
+
+# Absolute grid on frozen log-velocity at one half-life, in per-minute units.
+# Not estimated. Not the tertile cuts. The first bin is everything at or below
+# −100%/min, which the 14 Oct sample does not contain.
+COMPOSITION_CLOCK = 120.0
+COMPOSITION_EDGES = (-1.0, -0.5, -0.19, -0.005, 0.05)
+
+
+@dataclass(frozen=True)
+class VelocityCell:
+    """Empty cells have mean_payoff None. A single tape has no standard error."""
+
+    n: int
+    mean_payoff: float | None
+    stderr: float | None
+
+
+@dataclass(frozen=True)
+class CompositionBin:
+    """low is None on the left tail. high is None on the right tail."""
+
+    low: float | None
+    high: float | None
+    cells: tuple[VelocityCell, ...]
+
+
+@dataclass(frozen=True)
+class CarryMap:
+    """final payoff on the flat-carry payoff at the clock. slope near 1 is the claim."""
+
+    n: int
+    slope: float
+    intercept: float
+    rmse: float
+    residual_mean: float
+    residual_stderr: float
+    min_velocity: float
+    max_velocity: float
+
+
+@dataclass(frozen=True)
+class OverlapCell:
+    n: int
+    mean_payoff: float
+    residual_mean: float
+    residual_stderr: float
+
+
+@dataclass(frozen=True)
+class Composition:
+    clock: float
+    edges: tuple[float, ...]
+    bins: tuple[CompositionBin, ...]
+    windows: tuple[CarryMap, ...]
+    overlap_low: float
+    overlap_high: float
+    overlap: tuple[OverlapCell, ...]
+
+
+def _pairs(
+    launches: list[dict],
+    terms: LinearTerms,
+    clock: float,
+) -> list[tuple[float, float, float]]:
+    rows: list[tuple[float, float, float]] = []
+    for launch in launches:
+        samples = [(float(t), float(price)) for t, price in launch["samples"]]
+        cut = [(t, price) for t, price in samples if t <= clock]
+        frozen = settle_linear(cut, terms)
+        final = settle_linear(samples, terms)
+        rows.append(
+            (frozen.velocity_per_minute, frozen.payoff_to_long, final.payoff_to_long)
+        )
+    return rows
+
+
+def _edge_bin(velocity: float, edges: tuple[float, ...]) -> int:
+    for index, edge in enumerate(edges):
+        if velocity <= edge:
+            return index
+    return len(edges)
+
+
+def _ols(xs: list[float], ys: list[float]) -> tuple[float, float, float]:
+    n = len(xs)
+    mean_x = _mean(xs)
+    mean_y = _mean(ys)
+    sxx = sum((x - mean_x) ** 2 for x in xs)
+    if sxx == 0.0:
+        raise ValueError("flat-carry payoffs have no variance")
+    sxy = sum((x - mean_x) * (y - mean_y) for x, y in zip(xs, ys))
+    slope = sxy / sxx
+    intercept = mean_y - slope * mean_x
+    ss_res = sum((y - (intercept + slope * x)) ** 2 for x, y in zip(xs, ys))
+    return slope, intercept, math.sqrt(ss_res / n)
+
+
+def composition(
+    windows: list[list[dict]],
+    terms: LinearTerms,
+    clock: float = COMPOSITION_CLOCK,
+    edges: tuple[float, ...] = COMPOSITION_EDGES,
+) -> Composition:
+    """Whether the same frozen velocity pays the same thing on every window.
+
+    Tertile means can disagree because a later window contains velocities the
+    reference never printed. This puts every tape on one absolute grid, then
+    regresses the finished payoff on the flat-carry payoff. It does not pool
+    the windows into a price, and it does not move the strike.
+    """
+    if terms.window != 900.0:
+        raise ValueError(f"composition is a 900s window, got {terms.window}")
+    if len(windows) < 2:
+        raise ValueError("need at least two windows")
+    if len(edges) < 1 or not all(math.isfinite(edge) for edge in edges):
+        raise ValueError("edges must be finite")
+    if any(edges[index] >= edges[index + 1] for index in range(len(edges) - 1)):
+        raise ValueError("edges must be strictly increasing")
+    if not math.isfinite(clock) or clock <= 0.0 or clock > terms.window:
+        raise ValueError(f"clock must sit in (0, {terms.window:.0f}]")
+
+    paired = []
+    for launches in windows:
+        if len(launches) < 8:
+            raise ValueError("each window needs at least 8 tapes")
+        paired.append(_pairs(launches, terms, clock))
+
+    n_bins = len(edges) + 1
+    bins: list[CompositionBin] = []
+    for index in range(n_bins):
+        cells: list[VelocityCell] = []
+        for rows in paired:
+            payoffs = [
+                final
+                for velocity, _, final in rows
+                if _edge_bin(velocity, edges) == index
+            ]
+            cells.append(
+                VelocityCell(
+                    n=len(payoffs),
+                    mean_payoff=_mean(payoffs) if payoffs else None,
+                    stderr=_stderr_of_mean(payoffs) if len(payoffs) >= 2 else None,
+                )
+            )
+        bins.append(
+            CompositionBin(
+                low=None if index == 0 else edges[index - 1],
+                high=None if index == n_bins - 1 else edges[index],
+                cells=tuple(cells),
+            )
+        )
+
+    maps: list[CarryMap] = []
+    for rows in paired:
+        frozen_pay = [frozen for _, frozen, _ in rows]
+        final_pay = [final for _, _, final in rows]
+        slope, intercept, rmse = _ols(frozen_pay, final_pay)
+        residual = [final - frozen for _, frozen, final in rows]
+        velocities = [velocity for velocity, _, _ in rows]
+        maps.append(
+            CarryMap(
+                n=len(rows),
+                slope=slope,
+                intercept=intercept,
+                rmse=rmse,
+                residual_mean=_mean(residual),
+                residual_stderr=_stderr_of_mean(residual),
+                min_velocity=min(velocities),
+                max_velocity=max(velocities),
+            )
+        )
+
+    overlap_low = max(row.min_velocity for row in maps)
+    overlap_high = min(row.max_velocity for row in maps)
+    if not overlap_low < overlap_high:
+        raise ValueError("frozen-velocity ranges do not overlap")
+    overlap: list[OverlapCell] = []
+    for rows in paired:
+        kept = [
+            (frozen, final)
+            for velocity, frozen, final in rows
+            if overlap_low <= velocity <= overlap_high
+        ]
+        if len(kept) < 2:
+            raise ValueError("overlap needs at least 2 tapes in each window")
+        finals = [final for _, final in kept]
+        residual = [final - frozen for frozen, final in kept]
+        overlap.append(
+            OverlapCell(
+                n=len(kept),
+                mean_payoff=_mean(finals),
+                residual_mean=_mean(residual),
+                residual_stderr=_stderr_of_mean(residual),
+            )
+        )
+
+    return Composition(
+        clock=clock,
+        edges=edges,
+        bins=tuple(bins),
+        windows=tuple(maps),
+        overlap_low=overlap_low,
+        overlap_high=overlap_high,
+        overlap=tuple(overlap),
+    )

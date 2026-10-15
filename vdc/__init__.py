@@ -12,14 +12,22 @@ from vdc.curve import QUOTE0, TOKEN0, BondingCurve, Print, path_from_trades
 from vdc.fit import Fit, KernelScore, fit_launches, load_launches
 from vdc.flow import FRONT_LOADED, Flow, monte_carlo_linear, simulate_flow
 from vdc.freeze import (
+    COMPOSITION_CLOCK,
+    COMPOSITION_EDGES,
     FREEZE_CLOCKS,
     FROZEN_RANK_CLOCK,
     FROZEN_RANK_HIGH,
     FROZEN_RANK_LOW,
+    CarryMap,
+    Composition,
+    CompositionBin,
     FreezePoint,
     FrozenRank,
+    OverlapCell,
     RankBin,
+    VelocityCell,
     WindowGap,
+    composition,
     freeze_clock,
     frozen_rank,
     window_gap,
@@ -34,7 +42,7 @@ from vdc.velocity import (
     prepare_path,
 )
 
-__version__ = "0.3.5"
+__version__ = "0.3.6"
 
 __all__ = [
     "BUY_SIZES",
@@ -42,14 +50,22 @@ __all__ = [
     "DigitalSettlement",
     "DigitalTerms",
     "FRONT_LOADED",
+    "COMPOSITION_CLOCK",
+    "COMPOSITION_EDGES",
     "FREEZE_CLOCKS",
     "FROZEN_RANK_CLOCK",
     "FROZEN_RANK_HIGH",
     "FROZEN_RANK_LOW",
+    "CarryMap",
+    "Composition",
+    "CompositionBin",
     "FreezePoint",
     "FrozenRank",
+    "OverlapCell",
     "RankBin",
+    "VelocityCell",
     "WindowGap",
+    "composition",
     "freeze_clock",
     "frozen_rank",
     "window_gap",
