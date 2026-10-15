@@ -129,7 +129,7 @@ The two sample means are not a price. Flat-carry the tapes and the disagreement 
 | 2 min | −101.11 | −318.41 | −217.30 | −2.17 |
 | expiry | −131.13 | −363.59 | −232.46 | −2.16 |
 
-At 30 seconds the days are not separated. At 60 seconds they are, and the gap is already the expiry gap. Another unconditional window would print a third mean. It would not say which one to quote.
+At 30 seconds the days are not separated. At 60 seconds they are, and the gap is already the expiry gap. A third unconditional mean would not say which one to quote. The next section is that window.
 
 What keeps its sign is the rank of frozen velocity at two minutes. The cuts are the tertile edges of the 14 Oct tapes only, thirds of 11: **−19.02%/min** and **−0.52%/min**. A later window is scored on these cuts. They are not refit.
 
@@ -140,6 +140,26 @@ What keeps its sign is the rank of frozen velocity at two minutes. The cuts are 
 | above −0.52%/min | +141.96 ± 30.58 (n=11) | +74.57 ± 39.97 (n=10) |
 
 Both days run worst, then middle, then best, and the top bin is positive. The worst third is negative both times and 476 apart. That level is not a price either. The middle and the top sit much closer. Do not fit a surface through the crash bucket. Do not pool the windows. Half-life and strike stay.
+
+## Later window, same cuts
+
+Thirty more tapes, created 15 Oct 2026 between 08:12 and 08:20 UTC. Same filters. No mint in common with either earlier sample. About four and a half hours after the 03:37 burst. The 15-minute window had closed before the read.
+
+Scored on the cuts above. They were not refit.
+
+| frozen V at 2 min | this window |
+| --- | ---: |
+| at or below −19.02%/min | −724.77 ± 95.70 (n=12) |
+| between the cuts | −16.00 ± 10.34 (n=10) |
+| above −0.52%/min | +58.23 ± 15.09 (n=8) |
+
+Worst, then middle, then best. The worst bin is negative and the best bin is positive. That is the pre-registered test, and it holds. Lift the cap and the worst bin goes to **−976.26**; the other two bins do not move. The order is not the clamp.
+
+The level still does not. This crash bucket is −725, against −466 on 14 Oct and −943 at 03:37. Three numbers, none of them a price.
+
+Settled on the locked terms, the mean payoff is **−279.71**. Standard error 77.44. Six tapes hit the cap. Mean `V` is −41.4%/min. Uncapped, the mean is −380.31. It sits between the other two sample means. It is not pooled with them.
+
+Time reversal on this window still ranks 2 minutes first, and its own 60th percentile is −3.99%/min. The t-statistic is 1.30. That is not a confirmation of the kernel. The spec default stays.
 
 ## Launch mark, retired
 

@@ -64,6 +64,8 @@ def main() -> None:
     _print_freeze(launches, second, terms)
     _print_gap(launches, second, terms)
     _print_rank(launches, second, terms)
+    third = load_launches(Path(__file__).resolve().parents[1] / "data" / "launches_c.json")
+    _print_third(launches, third, terms)
 
 
 def _print_freeze(first: list[dict], second: list[dict], terms: LinearTerms) -> None:
@@ -116,6 +118,28 @@ def _print_rank(first: list[dict], second: list[dict], terms: LinearTerms) -> No
             f"{right.n:10d}{right.mean_payoff:10.2f}{right.stderr:8.2f}"
         )
     print("order holds on both days. the worst-third level does not.")
+
+
+def _print_third(first: list[dict], third: list[dict], terms: LinearTerms) -> None:
+    mark = mark_launches(third, terms)
+    fitted = fit_launches(third)
+    rank = frozen_rank(first, third, terms)
+    print()
+    print(f"later window     n={mark.n}   15 Oct 08:12 UTC   same cuts   not pooled")
+    print(f"mean payoff      {mark.mean_payoff:>8.2f}   stderr {mark.stderr:.2f}")
+    print(
+        f"mean velocity    {mark.mean_velocity * 100:.2f}%/min   capped {mark.n_capped}"
+    )
+    chosen = next(kernel for kernel in fitted.kernels if kernel.half_life == fitted.half_life)
+    print(
+        f"its own fit      half-life {fitted.half_life:.0f}s   "
+        f"strike {fitted.strike_per_minute * 100:.2f}%/min   "
+        f"t {chosen.t_stat:.2f}   not a confirmation   spec default unchanged"
+    )
+    print(f"{'bin':<8}{'n':>4}{'mean':>10}{'se':>8}")
+    for name, bin_ in zip(("worst", "middle", "best"), rank.replication):
+        print(f"{name:<8}{bin_.n:4d}{bin_.mean_payoff:10.2f}{bin_.stderr:8.2f}")
+    print("order holds. the worst-third level does not. not a price.")
 
 
 if __name__ == "__main__":
