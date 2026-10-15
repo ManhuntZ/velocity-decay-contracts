@@ -78,9 +78,30 @@ The inception mark is the mean payoff to the long on the 33 tapes, settled at th
 | mean V | −16.96%/min |
 | tapes at the cap | 1 |
 
-`python -m vdc` prints that number. It is one faded hour. The standard error is 56, so another window can move the mean by a lot. It is not a quote.
+`python -m vdc` prints that number. It is one faded afternoon. The standard error is 56, so another window can move the mean by a lot. It is not a quote.
 
-An earlier draft printed a handmade Poisson flow near +464. That simulator is still in the package, and still tested. It points the wrong way on this sample. It is not the mark.
+## Second window
+
+Thirty more SOL bonding curves, created 15 Oct 2026 between 03:37 and 03:44 UTC. Same filters: SOL quote, at least 0.005 SOL in the curve, at least six prints, a print within 45 seconds of creation. No mint in common with the first 33. The burst is seven minutes, not another full hour. That is how fast the filter filled.
+
+Time reversal still picks 2 minutes.
+
+| half-life | t |
+| --- | ---: |
+| 2 min | 2.46 |
+| 5 min | 2.41 |
+| 10 min | 2.34 |
+| flat | 0 |
+
+The 60th percentile on this window is **−4.47%/min**, about one point from the locked −3.36. That is not a new contract. The spec default stays.
+
+Settled on the locked terms, the window pays **−363.59** to the long. Standard error of the mean 91.96. Ten tapes hit the cap. Mean `V` is −58.5%/min. The first window's −131 does not replicate. The kernel and the strike did. The left tail did not.
+
+The two windows are not pooled. A blend would look more precise and would hide the disagreement.
+
+## Launch mark, retired
+
+An earlier draft printed a handmade Poisson flow near +464. That simulator is still in the package, and still tested. It is not the mark.
 
 ## Run
 

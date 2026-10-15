@@ -6,7 +6,7 @@ from pathlib import Path
 
 from vdc.contract import LinearTerms, settle_linear
 from vdc.curve import QUOTE0, TOKEN0, path_from_trades
-from vdc.fit import load_launches
+from vdc.fit import fit_launches, load_launches
 from vdc.sample import mark_launches
 from vdc.scenarios import SCENARIOS
 
@@ -44,6 +44,22 @@ def main() -> None:
     print(f"in-sample mark   n={mark.n}   14 Oct 2026   not a quote")
     print(f"mean payoff      {mark.mean_payoff:>8.2f}   stderr {mark.stderr:.2f}")
     print(f"mean velocity    {mark.mean_velocity * 100:.2f}%/min   capped {mark.n_capped}")
+    second = load_launches(Path(__file__).resolve().parents[1] / "data" / "launches_b.json")
+    other = mark_launches(second, terms)
+    fitted = fit_launches(second)
+    print()
+    print(f"second window    n={other.n}   15 Oct 2026   same terms   not pooled")
+    print(f"mean payoff      {other.mean_payoff:>8.2f}   stderr {other.stderr:.2f}")
+    print(f"mean velocity    {other.mean_velocity * 100:.2f}%/min   capped {other.n_capped}")
+    held = (
+        fitted.half_life == terms.half_life
+        and abs(fitted.strike_per_minute - terms.strike_per_minute) < 0.02
+    )
+    print(
+        f"its own fit      half-life {fitted.half_life:.0f}s   "
+        f"strike {fitted.strike_per_minute * 100:.2f}%/min   "
+        f"{'spec default unchanged' if held else 'disagrees with the spec default'}"
+    )
 
 
 if __name__ == "__main__":

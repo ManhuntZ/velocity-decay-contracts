@@ -1,6 +1,6 @@
 [project]
 name = "velocity-decay-contracts"
-version = "0.3.1"
+version = "0.3.2"
 description = "Cash-settled contracts on the decay-weighted price velocity of a bonding-curve launch"
 readme = "README.md"
 requires-python = ">=3.10"
