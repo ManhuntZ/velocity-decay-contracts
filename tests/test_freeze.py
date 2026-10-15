@@ -6,7 +6,15 @@ from pathlib import Path
 from vdc.contract import LinearTerms, settle_linear
 from vdc.curve import QUOTE0, TOKEN0, path_from_trades
 from vdc.fit import load_launches
-from vdc.freeze import freeze_clock
+from vdc.freeze import (
+    FROZEN_RANK_HIGH,
+    FROZEN_RANK_LOW,
+    freeze_clock,
+    frozen_rank,
+    frozen_velocity,
+    tertile_edges,
+    window_gap,
+)
 from vdc.sample import mark_launches
 from vdc.scenarios import late_trades
 
@@ -83,6 +91,61 @@ class FreezeClockTests(unittest.TestCase):
         # Nothing has printed. Flat carry pays the strike, not the tape.
         self.assertAlmostEqual(frozen, 33.64949456289831, places=8)
         self.assertGreater(final - frozen, 50.0)
+
+    def test_the_days_are_already_apart_at_one_minute(self):
+        gaps = {row.clock: row for row in window_gap(self.first, self.second, self.terms)}
+        early = gaps[30.0]
+        minute = gaps[60.0]
+        done = gaps[None]
+        self.assertAlmostEqual(early.mean_a, -25.020122121719815, places=9)
+        self.assertAlmostEqual(early.mean_b, -122.69123117623016, places=9)
+        self.assertAlmostEqual(early.t_stat, -1.185241296979766, places=9)
+        self.assertGreater(abs(early.t_stat), 1.0)
+        self.assertLess(abs(early.t_stat), 1.96)
+        self.assertAlmostEqual(minute.mean_a, -64.60240137428828, places=9)
+        self.assertAlmostEqual(minute.mean_b, -261.3493785186353, places=9)
+        self.assertAlmostEqual(minute.gap, -196.74697714434706, places=9)
+        self.assertAlmostEqual(minute.stderr, 97.5679417580879, places=9)
+        self.assertAlmostEqual(minute.t_stat, -2.016512530644193, places=9)
+        self.assertLess(minute.t_stat, -1.96)
+        self.assertAlmostEqual(done.mean_a, -131.13230729971312, places=9)
+        self.assertAlmostEqual(done.gap, -232.45967755027326, places=9)
+        self.assertAlmostEqual(done.t_stat, -2.1572385182024143, places=9)
+        # One minute already carries the expiry disagreement. Thirty seconds does not.
+        self.assertLess(abs(minute.gap - done.gap), 40.0)
+        self.assertGreater(abs(done.gap) - abs(early.gap), 100.0)
+
+    def test_rank_cuts_are_the_14_oct_tertiles_and_are_not_refit(self):
+        edges = tertile_edges(frozen_velocity(self.first, self.terms, 120.0))
+        self.assertEqual(edges, (FROZEN_RANK_LOW, FROZEN_RANK_HIGH))
+        self.assertAlmostEqual(FROZEN_RANK_LOW, -0.19015517148776662, places=12)
+        self.assertAlmostEqual(FROZEN_RANK_HIGH, -0.005193783861860567, places=12)
+        rank = frozen_rank(self.first, self.second, self.terms)
+        self.assertEqual(rank.low_cut, FROZEN_RANK_LOW)
+        self.assertEqual(rank.high_cut, FROZEN_RANK_HIGH)
+        self.assertEqual(tuple(bin.n for bin in rank.reference), (11, 11, 11))
+        self.assertEqual(tuple(bin.n for bin in rank.replication), (12, 8, 10))
+        self.assertAlmostEqual(rank.reference[0].mean_payoff, -466.3589813743815, places=9)
+        self.assertAlmostEqual(rank.reference[0].stderr, 99.73780149596381, places=9)
+        self.assertAlmostEqual(rank.reference[1].mean_payoff, -69.00026675634457, places=9)
+        self.assertAlmostEqual(rank.reference[2].mean_payoff, 141.96232623158673, places=9)
+        self.assertAlmostEqual(rank.replication[0].mean_payoff, -942.8501900926755, places=9)
+        self.assertAlmostEqual(rank.replication[0].stderr, 55.311408442086666, places=9)
+        self.assertAlmostEqual(rank.replication[1].mean_payoff, -42.41236599739296, places=9)
+        self.assertAlmostEqual(rank.replication[2].mean_payoff, 74.5741663591659, places=9)
+        for bins in (rank.reference, rank.replication):
+            self.assertLess(bins[0].mean_payoff, bins[1].mean_payoff)
+            self.assertLess(bins[1].mean_payoff, bins[2].mean_payoff)
+            self.assertLess(bins[0].mean_payoff, 0.0)
+            self.assertGreater(bins[2].mean_payoff, 0.0)
+        self.assertLess(
+            rank.replication[0].mean_payoff,
+            rank.reference[0].mean_payoff - 400.0,
+        )
+
+    def test_a_thirty_minute_window_is_not_this_comparison(self):
+        with self.assertRaises(ValueError):
+            window_gap(self.first, self.second, LinearTerms(window=1800.0))
 
 
 if __name__ == "__main__":

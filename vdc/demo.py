@@ -1,4 +1,4 @@
-"""Print the three tapes and the in-sample mark."""
+"""Print the three tapes, the sample means, and what replicates."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from pathlib import Path
 from vdc.contract import LinearTerms, settle_linear
 from vdc.curve import QUOTE0, TOKEN0, path_from_trades
 from vdc.fit import fit_launches, load_launches
-from vdc.freeze import FREEZE_CLOCKS, freeze_clock
+from vdc.freeze import FREEZE_CLOCKS, freeze_clock, frozen_rank, window_gap
 from vdc.sample import mark_launches
 from vdc.scenarios import SCENARIOS
 
@@ -42,14 +42,14 @@ def main() -> None:
     print()
     launches = load_launches(Path(__file__).resolve().parents[1] / "data" / "launches.json")
     mark = mark_launches(launches, terms)
-    print(f"in-sample mark   n={mark.n}   14 Oct 2026   not a quote")
+    print(f"14 Oct sample    n={mark.n}   sample mean, not a price")
     print(f"mean payoff      {mark.mean_payoff:>8.2f}   stderr {mark.stderr:.2f}")
     print(f"mean velocity    {mark.mean_velocity * 100:.2f}%/min   capped {mark.n_capped}")
     second = load_launches(Path(__file__).resolve().parents[1] / "data" / "launches_b.json")
     other = mark_launches(second, terms)
     fitted = fit_launches(second)
     print()
-    print(f"second window    n={other.n}   15 Oct 2026   same terms   not pooled")
+    print(f"15 Oct sample    n={other.n}   same terms   not pooled")
     print(f"mean payoff      {other.mean_payoff:>8.2f}   stderr {other.stderr:.2f}")
     print(f"mean velocity    {other.mean_velocity * 100:.2f}%/min   capped {other.n_capped}")
     held = (
@@ -62,6 +62,8 @@ def main() -> None:
         f"{'spec default unchanged' if held else 'disagrees with the spec default'}"
     )
     _print_freeze(launches, second, terms)
+    _print_gap(launches, second, terms)
+    _print_rank(launches, second, terms)
 
 
 def _print_freeze(first: list[dict], second: list[dict], terms: LinearTerms) -> None:
@@ -85,6 +87,35 @@ def _print_freeze(first: list[dict], second: list[dict], terms: LinearTerms) -> 
         f"uncapped mean    14 Oct {raw_a.mean_payoff:.2f}   "
         f"15 Oct {raw_b.mean_payoff:.2f}   the cap is not the gap"
     )
+
+
+def _print_gap(first: list[dict], second: list[dict], terms: LinearTerms) -> None:
+    print()
+    print("frozen mean payoff   gap is 15 Oct minus 14 Oct   not a price")
+    print(f"{'clock':<8}{'14 Oct':>10}{'15 Oct':>10}{'gap':>10}{'t':>8}")
+    for row in window_gap(first, second, terms):
+        label = "expiry" if row.clock is None else f"{row.clock:.0f}s"
+        print(
+            f"{label:<8}{row.mean_a:10.2f}{row.mean_b:10.2f}{row.gap:10.2f}{row.t_stat:8.2f}"
+        )
+
+
+def _print_rank(first: list[dict], second: list[dict], terms: LinearTerms) -> None:
+    rank = frozen_rank(first, second, terms)
+    print()
+    print(
+        "frozen V at "
+        f"{rank.clock:.0f}s   cuts {rank.low_cut * 100:.2f}%/min and "
+        f"{rank.high_cut * 100:.2f}%/min   14 Oct tertiles, not refit"
+    )
+    print(f"{'bin':<8}{'14 Oct n':>10}{'mean':>10}{'se':>8}{'15 Oct n':>10}{'mean':>10}{'se':>8}")
+    names = ("worst", "middle", "best")
+    for name, left, right in zip(names, rank.reference, rank.replication):
+        print(
+            f"{name:<8}{left.n:10d}{left.mean_payoff:10.2f}{left.stderr:8.2f}"
+            f"{right.n:10d}{right.mean_payoff:10.2f}{right.stderr:8.2f}"
+        )
+    print("order holds on both days. the worst-third level does not.")
 
 
 if __name__ == "__main__":

@@ -1,8 +1,8 @@
-"""In-sample inception mark.
+"""Sample means on the shipped tapes.
 
-The pricing measure is the tapes shipped in data/launches.json, settled under
-the contract terms. Mean payoff to the long, and the standard error of that
-mean. The Poisson flow is a simulator. It is not this mark.
+Mean payoff to the long, and the standard error of that mean, settled under
+the contract terms. A sample mean is not a price. The Poisson flow is a
+simulator. It is not a sample mean either.
 """
 
 from __future__ import annotations

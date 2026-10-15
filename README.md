@@ -67,9 +67,9 @@ Window 900s, half-life 120s, strike −3.36%/min, notional 1,000, cap 1,000. Tha
 
 The fitted strike sits below the log slope of these canned buys, so the long is paid on all three and paid most when the buys are early. On a flat kernel the three contract velocities collapse to the log slope.
 
-## In-sample mark
+## Sample means
 
-The inception mark is the mean payoff to the long on the 33 tapes, settled at the spec default. One of those tapes hits the cap.
+The 14 Oct figure is the mean payoff to the long on the 33 tapes, settled at the spec default. One of those tapes hits the cap. It is a sample mean. It is not a price.
 
 | | |
 | --- | ---: |
@@ -78,7 +78,7 @@ The inception mark is the mean payoff to the long on the 33 tapes, settled at th
 | mean V | −16.96%/min |
 | tapes at the cap | 1 |
 
-`python -m vdc` prints that number. It is one faded afternoon. The standard error is 56, so another window can move the mean by a lot. It is not a quote.
+`python -m vdc` prints that number. The standard error is 56, so another afternoon moves it. The next section is why it is not averaged with the second window.
 
 ## Second window
 
@@ -118,9 +118,32 @@ This is not a conditional expectation, and it is not "the contract is finished."
 
 Half-life and strike stay the 14 Oct fit. The windows stay unpooled.
 
+## What replicates
+
+The two sample means are not a price. Flat-carry the tapes and the disagreement is already in before expiry. The gap is 15 Oct minus 14 Oct. The t-statistic is that gap divided by the standard error of the difference of means.
+
+| clock | 14 Oct | 15 Oct | gap | t |
+| --- | ---: | ---: | ---: | ---: |
+| 30s | −25.02 | −122.69 | −97.67 | −1.19 |
+| 60s | −64.60 | −261.35 | −196.75 | −2.02 |
+| 2 min | −101.11 | −318.41 | −217.30 | −2.17 |
+| expiry | −131.13 | −363.59 | −232.46 | −2.16 |
+
+At 30 seconds the days are not separated. At 60 seconds they are, and the gap is already the expiry gap. Another unconditional window would print a third mean. It would not say which one to quote.
+
+What keeps its sign is the rank of frozen velocity at two minutes. The cuts are the tertile edges of the 14 Oct tapes only, thirds of 11: **−19.02%/min** and **−0.52%/min**. A later window is scored on these cuts. They are not refit.
+
+| frozen V at 2 min | 14 Oct | 15 Oct |
+| --- | ---: | ---: |
+| at or below −19.02%/min | −466.36 ± 99.74 (n=11) | −942.85 ± 55.31 (n=12) |
+| between the cuts | −69.00 ± 18.19 (n=11) | −42.41 ± 25.88 (n=8) |
+| above −0.52%/min | +141.96 ± 30.58 (n=11) | +74.57 ± 39.97 (n=10) |
+
+Both days run worst, then middle, then best, and the top bin is positive. The worst third is negative both times and 476 apart. That level is not a price either. The middle and the top sit much closer. Do not fit a surface through the crash bucket. Do not pool the windows. Half-life and strike stay.
+
 ## Launch mark, retired
 
-An earlier draft printed a handmade Poisson flow near +464. That simulator is still in the package, and still tested. It is not the mark.
+An earlier draft printed a handmade Poisson flow near +464. That simulator is still in the package, and still tested. It is not a price.
 
 ## Run
 
