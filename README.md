@@ -186,9 +186,26 @@ The finished payoff on the flat-carry payoff at two minutes:
 | 03:37 | 1.033 | −34.58 | −45.18 ± 19.50 | 104 |
 | 08:12 | 1.016 | −44.35 | −48.08 ± 23.67 | 127 |
 
-The slope sits between 1.02 and 1.09. The residual, final minus flat-carry, is a few dozen desk units against the long on every window. The largest gap between those averages is 18, and the standard error of that gap is 29. Once the velocity is the same, the days are not separated.
+The slope sits between 1.02 and 1.09. The average residual, −30, −45, and −48, does not separate the days. That average is a mix. It is not a haircut.
 
-The residual is still there. RMSE of 88 to 127 is not an exact early settlement. Do not fit a smoother than slope 1. Do not pool the three means into one price. Half-life and strike stay the 14 Oct fit.
+## What is finished
+
+The residual is the finished payoff minus flat-carry at two minutes. Split it on two declared lines and on zero. The cap line is flat-carry already at collateral. The other line is the −19%/min edge from the grid above. It is not a new estimate. Zero is not fit.
+
+| state at 2 min | 14 Oct | 03:37 | 08:12 |
+| --- | ---: | ---: | ---: |
+| already at the cap | none | 0.0 (n=8) | 0.0 (n=4) |
+| at or below −19%/min, not capped | −73.0 ± 46.2 (n=11) | −262.6 ± 87.8 (n=4) | −129.9 ± 83.0 (n=8) |
+| between −19%/min and 0 | −13.8 ± 6.5 (n=11) | +2.0 ± 1.9 (n=10) | −4.7 ± 2.0 (n=11) |
+| above 0 | −3.2 ± 9.6 (n=11) | −40.6 ± 13.3 (n=8) | −50.2 ± 20.7 (n=7) |
+
+A tape already at the cap stays there. A tape between −19%/min and zero finishes within about 15 of flat-carry on all three windows. Those two states are done.
+
+The average of a few dozen was those tapes mixed with the third. At or below −19%/min, and not yet at collateral, the long keeps losing on every window, and the amount does not land: −73, −263, −130. Four tapes at 03:37. That is not a quote.
+
+Above zero is not a rule. 14 Oct gave nothing back. The later windows gave back about 40 to 50. That is the same soft cell as the row above +5%/min. It does not move the half-life or the strike.
+
+A line through the residual, fit on 14 Oct, raises the error on both later windows. Subtracting 14 Oct's average leftover trims the root mean square by less than 10. Neither is a price. Do not pool the windows. Half-life and strike stay the 14 Oct fit.
 
 ## Launch mark, retired
 

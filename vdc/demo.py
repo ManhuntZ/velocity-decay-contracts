@@ -7,7 +7,14 @@ from pathlib import Path
 from vdc.contract import LinearTerms, settle_linear
 from vdc.curve import QUOTE0, TOKEN0, path_from_trades
 from vdc.fit import fit_launches, load_launches
-from vdc.freeze import FREEZE_CLOCKS, composition, freeze_clock, frozen_rank, window_gap
+from vdc.freeze import (
+    FREEZE_CLOCKS,
+    composition,
+    freeze_clock,
+    frozen_rank,
+    residual_states,
+    window_gap,
+)
 from vdc.sample import mark_launches
 from vdc.scenarios import SCENARIOS
 
@@ -67,6 +74,7 @@ def main() -> None:
     third = load_launches(Path(__file__).resolve().parents[1] / "data" / "launches_c.json")
     _print_third(launches, third, terms)
     _print_composition([launches, second, third], terms)
+    _print_states([launches, second, third], terms)
 
 
 def _print_freeze(first: list[dict], second: list[dict], terms: LinearTerms) -> None:
@@ -163,6 +171,37 @@ def _print_composition(windows: list[list[dict]], terms: LinearTerms) -> None:
             f"{name:<16}{row.slope:8.3f}{row.residual_mean:10.2f}{row.residual_stderr:8.2f}{row.rmse:8.0f}"
         )
     print("same velocity pays about the same. the tertile gap is mix. not pooled.")
+
+
+def _print_states(windows: list[list[dict]], terms: LinearTerms) -> None:
+    result = residual_states(windows, terms)
+    print()
+    print(
+        "residual after two minutes   final minus flat-carry   "
+        f"split {result.split * 100:.0f}%/min   not a haircut"
+    )
+    print(f"{'state':<16}{'14 Oct':>18}{'03:37':>18}{'08:12':>18}")
+    labels = {
+        "capped": "at the cap",
+        "left": "<= -19%, open",
+        "middle": "-19% to 0",
+        "above": "above 0",
+    }
+    for state in result.states:
+        print(
+            f"{labels[state.name]:<16}"
+            f"{_residual_cell(state.cells[0])}{_residual_cell(state.cells[1])}"
+            f"{_residual_cell(state.cells[2])}"
+        )
+    print("the cap and the middle are finished. the uncapped crash has no level.")
+
+
+def _residual_cell(cell) -> str:
+    if cell.n == 0 or cell.mean_residual is None:
+        return f"{'-':>18}"
+    if cell.stderr is None:
+        return f"{cell.mean_residual:7.1f} ({cell.n})".rjust(18)
+    return f"{cell.mean_residual:7.1f} ±{cell.stderr:5.1f} ({cell.n})".rjust(18)
 
 
 def _bin_label(low: float | None, high: float | None) -> str:

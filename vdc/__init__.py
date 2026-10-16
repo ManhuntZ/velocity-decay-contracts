@@ -18,6 +18,7 @@ from vdc.freeze import (
     FROZEN_RANK_CLOCK,
     FROZEN_RANK_HIGH,
     FROZEN_RANK_LOW,
+    RESIDUAL_SPLIT,
     CarryMap,
     Composition,
     CompositionBin,
@@ -25,11 +26,15 @@ from vdc.freeze import (
     FrozenRank,
     OverlapCell,
     RankBin,
+    ResidualCell,
+    ResidualState,
+    ResidualStates,
     VelocityCell,
     WindowGap,
     composition,
     freeze_clock,
     frozen_rank,
+    residual_states,
     window_gap,
 )
 from vdc.sample import SAMPLE_WINDOW, SampleMark, mark_launches
@@ -42,7 +47,7 @@ from vdc.velocity import (
     prepare_path,
 )
 
-__version__ = "0.3.6"
+__version__ = "0.3.7"
 
 __all__ = [
     "BUY_SIZES",
@@ -56,6 +61,7 @@ __all__ = [
     "FROZEN_RANK_CLOCK",
     "FROZEN_RANK_HIGH",
     "FROZEN_RANK_LOW",
+    "RESIDUAL_SPLIT",
     "CarryMap",
     "Composition",
     "CompositionBin",
@@ -63,11 +69,15 @@ __all__ = [
     "FrozenRank",
     "OverlapCell",
     "RankBin",
+    "ResidualCell",
+    "ResidualState",
+    "ResidualStates",
     "VelocityCell",
     "WindowGap",
     "composition",
     "freeze_clock",
     "frozen_rank",
+    "residual_states",
     "window_gap",
     "Flow",
     "Fit",

@@ -482,3 +482,93 @@ def composition(
         overlap_high=overlap_high,
         overlap=tuple(overlap),
     )
+
+
+# The −19%/min line is COMPOSITION_EDGES, not a new estimate. Zero is not fit.
+# A tape already at the downside cap is its own state, ahead of the velocity split.
+RESIDUAL_SPLIT = -0.19
+
+
+@dataclass(frozen=True)
+class ResidualCell:
+    """mean_residual is final payoff minus flat-carry. Empty cells leave it None."""
+
+    n: int
+    mean_residual: float | None
+    stderr: float | None
+
+
+@dataclass(frozen=True)
+class ResidualState:
+    name: str
+    cells: tuple[ResidualCell, ...]
+
+
+@dataclass(frozen=True)
+class ResidualStates:
+    clock: float
+    split: float
+    states: tuple[ResidualState, ResidualState, ResidualState, ResidualState]
+
+
+def _residual_state(velocity: float, frozen_payoff: float, cap: float, split: float) -> int:
+    if frozen_payoff <= -cap + 1e-9:
+        return 0
+    if velocity <= split:
+        return 1
+    if velocity <= 0.0:
+        return 2
+    return 3
+
+
+def residual_states(
+    windows: list[list[dict]],
+    terms: LinearTerms,
+    clock: float = COMPOSITION_CLOCK,
+    split: float = RESIDUAL_SPLIT,
+) -> ResidualStates:
+    """Where the leftover after the freeze is finished, and where it is not.
+
+    State 0 is flat-carry already at the downside cap. State 1 is frozen
+    velocity at or below the split and not at the cap. State 2 is between the
+    split and zero. State 3 is above zero. The residual is the finished payoff
+    minus flat-carry. This does not estimate a haircut and it does not move
+    the strike.
+    """
+    if terms.window != 900.0:
+        raise ValueError(f"residual states are a 900s window, got {terms.window}")
+    if len(windows) < 2:
+        raise ValueError("need at least two windows")
+    if not math.isfinite(split) or split >= 0.0:
+        raise ValueError("split must be finite and negative")
+    if not math.isfinite(clock) or clock <= 0.0 or clock > terms.window:
+        raise ValueError(f"clock must sit in (0, {terms.window:.0f}]")
+
+    names = ("capped", "left", "middle", "above")
+    buckets: list[list[list[float]]] = [[[] for _ in names] for _ in windows]
+    for window_index, launches in enumerate(windows):
+        if len(launches) < 8:
+            raise ValueError("each window needs at least 8 tapes")
+        for velocity, frozen_payoff, final in _pairs(launches, terms, clock):
+            state = _residual_state(velocity, frozen_payoff, terms.cap, split)
+            buckets[window_index][state].append(final - frozen_payoff)
+
+    states: list[ResidualState] = []
+    for state_index, name in enumerate(names):
+        cells: list[ResidualCell] = []
+        for window_index in range(len(windows)):
+            values = buckets[window_index][state_index]
+            cells.append(
+                ResidualCell(
+                    n=len(values),
+                    mean_residual=_mean(values) if values else None,
+                    stderr=_stderr_of_mean(values) if len(values) >= 2 else None,
+                )
+            )
+        states.append(ResidualState(name=name, cells=tuple(cells)))
+
+    return ResidualStates(
+        clock=clock,
+        split=split,
+        states=(states[0], states[1], states[2], states[3]),
+    )
